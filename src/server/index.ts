@@ -1,4 +1,5 @@
 import { Client, APIErrorCode } from "@notionhq/client";
+import fs from 'fs';
 import {
   Block,
   Page,
@@ -137,6 +138,13 @@ async function main() {
         const id = m.page.id;
         if (tasks[key].adjacency.indexOf(id) == -1) {
           tasks[key].adjacency.push(id);
+          if (!tasks[id]){
+            tasks[id] = {
+              Title: 'Test',
+              'Status': "Test2",
+              'adjacency': []
+            }
+          }
           tasks[id].adjacency.push(key);
         }
       }
@@ -144,8 +152,9 @@ async function main() {
   }
 
   console.log("Got all mentions");
-  //   console.log(all_mentions);
   console.log(tasks);
+  fs.writeFile('all_pages.json', JSON.stringify(tasks), 'utf8', ()=>1);
 }
 
-main();
+// main();
+export = main;
