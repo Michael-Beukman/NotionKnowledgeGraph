@@ -2,7 +2,7 @@ const SERVER = "http://localhost:3000";
 let network = null;
 let my_data = null;
 let empty = false;
-
+let curr_width = 0;
 
 
 function loading() {
@@ -149,4 +149,12 @@ $("#btnEmpty").on('click', ()=>{
     empty = !empty;
     display_graph(my_data, empty);
 })
+
+$("#btnConfig").on('click', ()=>{
+    curr_width = (curr_width == 0) ? 20 : 0;
+
+    $("#mynetwork").css("width", `${100 - curr_width}vw`);
+    $("#sidepanel").css("width", `${curr_width}vw`);
+});
+
 get_data();
