@@ -57,7 +57,10 @@ function get_data(){
 }
 
 $("#btn_rebuild_cache").on('click', ()=>{
-    $.ajax(SERVER + "/rebuild", {'method': 'post',}).then((v) => {
+    $.ajax(SERVER + "/rebuild", {
+        'method': 'post',
+        data:  {'ids': $("#inpIds").val().split(" ")}
+    }).then((v) => {
         console.log("rebuilt", v);
         get_data();
     })

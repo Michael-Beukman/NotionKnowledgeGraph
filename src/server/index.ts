@@ -1,5 +1,5 @@
 import { Client, APIErrorCode } from "@notionhq/client";
-import fs from 'fs';
+import fs from "fs";
 import {
   Block,
   Page,
@@ -13,11 +13,7 @@ const notion = new Client({
   auth: process.env.NOTION_KEY,
 });
 
-const databaseId = process.env.NOTION_DATABASE_ID!;
 const database_id = process.env.NOTION_DATABASE_ID!;
-console.log({
-  databaseId,
-});
 
 interface Task {
   Title: string;
@@ -66,9 +62,12 @@ async function get_mentions_from_blocks(block: Block) {
   return mentions;
 }
 
-async function main() {
-  async function getTasksFromDatabase() {
-    const tasks: Record<string, Task> = {};
+async function main(ids: Array<string> = [database_id]) {
+  async function getTasksFromDatabase(
+    database_id: string,
+    tasks: Record<string, Task> = {}
+  ) {
+    // const tasks: Record<string, Task> = {};
 
     async function getPageOfTasks(cursor: any = undefined) {
       let request_payload: RequestParameters = {
@@ -96,17 +95,16 @@ async function main() {
 
       for (const page of results) {
         const name: any = page.properties.Name;
-        if (page.properties.Status) {
-          const stat: any = page.properties.Status;
-          tasks[page.id] = {
-            Status: stat.select.name,
-            Title: name.title[0].text.content,
-            adjacency: [],
-          };
+        const stat: any = page.properties.Status;
+        const status = stat ? stat.select.name : "No Status";
+        const title = name.title[0].text.content;
+        if (tasks[page.id]) {
+          tasks[page.id].Title = title;
+          tasks[page.id].Status = status;
         } else {
           tasks[page.id] = {
-            Status: "No Status",
-            Title: name.title[0].text.content,
+            Status: status,
+            Title: title,
             adjacency: [],
           };
         }
@@ -119,7 +117,11 @@ async function main() {
     return tasks;
   }
 
-  const tasks = await getTasksFromDatabase();
+  let tasks: Record<string, Task> = {};
+  for (let db_id of ids){
+    tasks = await getTasksFromDatabase(db_id, tasks);
+  }
+  // const tasks = await getTasksFromDatabase(database_id);
 
   console.log("Got tasks", tasks);
   for (let key in tasks) {
@@ -138,12 +140,12 @@ async function main() {
         const id = m.page.id;
         if (tasks[key].adjacency.indexOf(id) == -1) {
           tasks[key].adjacency.push(id);
-          if (!tasks[id]){
+          if (!tasks[id]) {
             tasks[id] = {
-              Title: 'Test',
-              'Status': "Test2",
-              'adjacency': []
-            }
+              Title: "Test",
+              Status: "Test2",
+              adjacency: [],
+            };
           }
           tasks[id].adjacency.push(key);
         }
@@ -153,7 +155,7 @@ async function main() {
 
   console.log("Got all mentions");
   console.log(tasks);
-  fs.writeFile('all_pages.json', JSON.stringify(tasks), 'utf8', ()=>1);
+  fs.writeFile("all_pages.json", JSON.stringify(tasks), "utf8", () => 1);
 }
 
 // main();
