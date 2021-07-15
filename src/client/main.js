@@ -8,7 +8,11 @@ function loading() {
 function end_loading() {
     $("#page_blocker").toggle()
 }
-
+function shorten(s, l = 25){
+    if (s.length <= l) return s;
+    const start = s.slice(0, l) + "\n" + shorten(s.slice(l))
+    return start
+}
 /**
  * 
  * Displays the graph using viz-network and the data from the server.
@@ -26,7 +30,9 @@ const display_graph = (data) => {
         int_to_page_id[i] = page_id
         nodes.push({
             id: i,
-            label: connections[page_id].Title
+            label: shorten(connections[page_id].Title),
+            title: connections[page_id].Title,
+            shape: 'ellipse',
         });
         i += 1;
     }
@@ -45,11 +51,29 @@ const display_graph = (data) => {
     }
     // create a network
     var container = document.getElementById("mynetwork");
+    var panel = document.getElementById("sidepanel");
     var data = {
         nodes: new vis.DataSet(nodes),
         edges: new vis.DataSet(edges),
     };
-    var options = {};
+    var options = {
+        configure: {
+            enabled: true,
+            // filter: 'nodes,edges',
+            container: panel,
+            showButton: true
+          },
+          physics: {
+              'solver': "barnesHut",
+              barnesHut: {
+                  avoidOverlap: 0.2,
+                  springLength: 200
+              }
+          },
+          interaction: {
+              tooltipDelay: 100
+          }
+    };
     network = new vis.Network(container, data, options);
 }
 
