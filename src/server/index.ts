@@ -87,6 +87,7 @@ async function main(ids: Array<string>) {
         path: "test",
         method: "post",
       };
+
       // Create the request payload based on the presence of a start_cursor.
       if (cursor == undefined) {
         request_payload = {
@@ -162,8 +163,10 @@ async function main(ids: Array<string>) {
 
         // add the adjacency where necessary
         const id = m.page.id;
+        // if it doesn't already exist, add it in.
         if (tasks[key].adjacency.indexOf(id) == -1) {
           tasks[key].adjacency.push(id);
+          // if the other page does not exist yet, then add it in with a dummy title.
           if (!tasks[id]) {
             tasks[id] = {
               Title: "Test",

@@ -5,6 +5,7 @@ let empty = false;
 let curr_width = 0;
 
 
+// Load and stop loading.
 function loading() {
     $("#page_blocker").toggle()
 }
@@ -12,6 +13,7 @@ function loading() {
 function end_loading() {
     $("#page_blocker").toggle()
 }
+// adds in newlines for better display.
 function shorten(s, l = 25){
     if (s.length <= l) return s;
     const start = s.slice(0, l) + "\n" + shorten(s.slice(l))
@@ -24,6 +26,7 @@ function shorten(s, l = 25){
 const display_graph = (data, empty=false) => {
     const connections = data;
     let i = 0;
+    // both ways mapping from id <=> index
     const page_id_to_int = {}
     const int_to_page_id = {}
     const edges = []
@@ -32,6 +35,7 @@ const display_graph = (data, empty=false) => {
     for (let page_id in connections) {
         page_id_to_int[page_id] = i
         int_to_page_id[i] = page_id
+        // Make the node
         nodes.push({
             id: i,
             label: shorten(connections[page_id].Title),
@@ -58,10 +62,12 @@ const display_graph = (data, empty=false) => {
         i += 1;
     }
 
+    // Create the edges
     for (let page_id in connections) {
         const from = page_id_to_int[page_id];
         for (let other_id of connections[page_id].adjacency) {
             const to = page_id_to_int[other_id]
+            // only add in new edges.
             const finder = edges.find((value) => value.from == to && value.to == from || value.to == to && value.from == from)
             if (!finder)
                 edges.push({
@@ -70,7 +76,7 @@ const display_graph = (data, empty=false) => {
                 })
         }
     }
-    // create a network
+    // create the network
     var container = document.getElementById("mynetwork");
     var panel = document.getElementById("sidepanel");
     var data = {
@@ -135,7 +141,6 @@ $("#btn_rebuild_cache").on('click', () => {
         }
     }).then((v) => {
         end_loading();
-        console.log("From rebuild cache: ", v, v == "done");
         if (v !== "done") {
             $("#error_div").html(`An error occurred while rebuilding cache ${v}`)
             $("#error_div").show();
@@ -145,11 +150,14 @@ $("#btn_rebuild_cache").on('click', () => {
     })
 })
 
+
+// Removes labels from nodes
 $("#btnEmpty").on('click', ()=>{
     empty = !empty;
     display_graph(my_data, empty);
 })
 
+// Toggles the config menu
 $("#btnConfig").on('click', ()=>{
     curr_width = (curr_width == 0) ? 20 : 0;
 

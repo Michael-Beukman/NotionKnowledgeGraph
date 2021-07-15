@@ -48,3 +48,6 @@ Some options:
 ## Problems
 
 If you run into any problems, make sure you have shared the correct databases with your integration, and the `.env` file is correctly set up. If any pages mention pages outside the current database, you might also have some problems.
+
+## Notes
+Whenever you make changes to your notion workspace, or add pages or mentions, you will need to rebuild the cache first, because the system is not live.

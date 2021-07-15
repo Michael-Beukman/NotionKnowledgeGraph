@@ -2,13 +2,20 @@ const express = require("express");
 const path = require("path");
 import main_rebuild from "./index";
 import fs from "fs";
+
+
+/**
+ * This file basically just redirects the requests to their appropriate places.
+ */
+
+
 const app = express();
 // https://stackabuse.com/get-http-post-body-in-express-js
 const bodyParser = require("body-parser");
 
 // From here: https://dev.to/dcodeyt/building-a-single-page-app-without-frameworks-hl9
-
 app.use("/client", express.static(path.resolve(__dirname, "../client")));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/", (req: any, res: any) => {
@@ -31,13 +38,13 @@ app.get("/data", (req: any, res: any) => {
 app.post("/rebuild", async (req: any, res: any) => {
   const ids = req.body.ids;
   console.log("Rebuilding now.");
-  await main_rebuild(ids);
-  res.send("done");
   try{
-
+    await main_rebuild(ids);
+    res.send("done");
   }catch(e){
     res.send(`An error occurred. (${e})`)
   }
+  console.log("Done with rebuild.")
 });
 
 app.listen(process.env.PORT || 3000, () => console.log("Server running..."));
