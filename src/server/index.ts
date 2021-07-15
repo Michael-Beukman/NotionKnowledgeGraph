@@ -9,18 +9,22 @@ import {
 import { RequestParameters } from "@notionhq/client/build/src/Client";
 import dotenv from "dotenv";
 dotenv.config();
+// get api key from .env
 const notion = new Client({
   auth: process.env.NOTION_KEY,
 });
-
-const database_id = process.env.NOTION_DATABASE_ID!;
-
+// A simple task.
 interface Task {
   Title: string;
   Status: string;
   adjacency: Array<string>;
 }
 
+/**
+ * This returns a list of page mentions found recursively inside this block.
+ * @param block The block to get values from recursively
+ * @returns Array<PageMention>
+ */
 async function get_mentions_from_blocks(block: Block) {
   if (!block) return [];
 
@@ -31,7 +35,6 @@ async function get_mentions_from_blocks(block: Block) {
   const texts: RichText[] = test.text;
 
   let mentions: Array<PageMention> = [];
-  console.log({ children, texts });
 
   if (block.has_children) {
     const request_payload: RequestParameters = {
@@ -39,18 +42,21 @@ async function get_mentions_from_blocks(block: Block) {
       method: "get",
     };
 
+    // You need to get the children using the api again.
     const current_pages: any = await notion.request(request_payload);
 
     children = current_pages.results;
   }
 
   if (block.has_children && children) {
+    // recursively get mentions from the children.
     for (let c of children) {
       mentions = mentions.concat(await get_mentions_from_blocks(c));
     }
   }
 
   if (texts) {
+    // Find all mentions.
     for (let text of texts) {
       if (text.type == "mention") {
         if (text.mention.type == "page") {
@@ -62,13 +68,20 @@ async function get_mentions_from_blocks(block: Block) {
   return mentions;
 }
 
-async function main(ids: Array<string> = [database_id]) {
+async function main(ids: Array<string>) {
+  
+  /**
+   * 
+   * @param database_id The DB ID to search through
+   * @param tasks The current list of tasks.
+   * @returns List of tasks.
+   */
   async function getTasksFromDatabase(
     database_id: string,
     tasks: Record<string, Task> = {}
   ) {
-    // const tasks: Record<string, Task> = {};
 
+    // From Notion API getting started.
     async function getPageOfTasks(cursor: any = undefined) {
       let request_payload: RequestParameters = {
         path: "test",
@@ -89,6 +102,7 @@ async function main(ids: Array<string> = [database_id]) {
           },
         };
       }
+
       // While there are more pages left in the query, get pages from the database.
       const current_pages: any = await notion.request(request_payload);
       const results: Array<Page> = current_pages.results;
@@ -98,10 +112,12 @@ async function main(ids: Array<string> = [database_id]) {
         const stat: any = page.properties.Status;
         const status = stat ? stat.select.name : "No Status";
         const title = name.title[0].text.content;
+        // change name and status if necessary
         if (tasks[page.id]) {
           tasks[page.id].Title = title;
           tasks[page.id].Status = status;
         } else {
+          // otherwise add in.
           tasks[page.id] = {
             Status: status,
             Title: title,
@@ -117,14 +133,15 @@ async function main(ids: Array<string> = [database_id]) {
     return tasks;
   }
 
+
+  // ALl tasks
   let tasks: Record<string, Task> = {};
+  // For All DBs, go through it.
   for (let db_id of ids){
     tasks = await getTasksFromDatabase(db_id, tasks);
   }
-  // const tasks = await getTasksFromDatabase(database_id);
-
-  console.log("Got tasks", tasks);
   for (let key in tasks) {
+    // Now, for all pages themselves, go through all of their blocks.
     const request_payload: RequestParameters = {
       path: "blocks/" + key + "/children",
       method: "get",
@@ -132,11 +149,18 @@ async function main(ids: Array<string> = [database_id]) {
 
     const current_pages: any = await notion.request(request_payload);
     const results: Block[] = current_pages.results;
+    
+    // For all blocks.
     for (let block of results) {
       let all_mentions: Array<PageMention> = [];
-
+      
+      // Update the mentions array
       all_mentions = all_mentions.concat(await get_mentions_from_blocks(block));
+      
+      // for all mentions
       for (let m of all_mentions) {
+
+        // add the adjacency where necessary
         const id = m.page.id;
         if (tasks[key].adjacency.indexOf(id) == -1) {
           tasks[key].adjacency.push(id);
@@ -153,10 +177,7 @@ async function main(ids: Array<string> = [database_id]) {
     }
   }
 
-  console.log("Got all mentions");
-  console.log(tasks);
+  // Write final to a json file for reuse without expensive querying.
   fs.writeFile("all_pages.json", JSON.stringify(tasks), "utf8", () => 1);
 }
-
-// main();
 export = main;

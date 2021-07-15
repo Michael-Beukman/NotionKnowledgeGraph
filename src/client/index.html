@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Network</title>
+    <title>Knowledge Graph</title>
     <script
       type="text/javascript"
       src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
@@ -15,12 +15,33 @@
         height: 90vh;
         border: 1px solid lightgray;
       }
+      #page_blocker{
+        width: 100vw;
+        height: 100vh;
+        z-index: 10000;
+        position: absolute;
+        display: none;
+      }
+      input{
+        word-break: break-word!important;
+        overflow: visible!important;
+      }
+      #error_div{
+        background-color: red;
+      }
     </style>
   </head>
   <body>
+    <div id="page_blocker" class="text-center">
+      <span>Loading...</span>
+      <div class="spinner-border" role="status">
+      </div>
+    </div>
     <div style="height: 6vh;">
         <button class="btn btn-primary" id="btn_rebuild_cache" >Rebuild cache</button>
-        <input id='inpIds' value = '' />
+        <label>Database IDs: </label> <input id='inpIds' value = '' />
+
+        <span id="error_div" style="display: none;"></span>
     </div>
     <div id="mynetwork"></div>
     <script src="/client/main.js"></script>
