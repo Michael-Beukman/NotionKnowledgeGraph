@@ -1,5 +1,9 @@
 const SERVER = "http://localhost:3000";
 let network = null;
+let my_data = null;
+let empty = false;
+
+
 
 function loading() {
     $("#page_blocker").toggle()
@@ -17,7 +21,7 @@ function shorten(s, l = 25){
  * 
  * Displays the graph using viz-network and the data from the server.
  */
-const display_graph = (data) => {
+const display_graph = (data, empty=false) => {
     const connections = data;
     let i = 0;
     const page_id_to_int = {}
@@ -33,6 +37,23 @@ const display_graph = (data) => {
             label: shorten(connections[page_id].Title),
             title: connections[page_id].Title,
             shape: 'ellipse',
+            font:{
+                size: (1-empty) * 14
+            },
+            chosen:{
+                node: function(values){
+                    values.size *= 2;
+                },
+                label: function (values){
+                    values.size = 14;
+                }
+            },
+            value: connections[page_id].adjacency.length * 10,
+            scaling: {
+                label: {
+                    drawThreshold: 0
+                }
+            }
         });
         i += 1;
     }
@@ -71,7 +92,7 @@ const display_graph = (data) => {
               }
           },
           interaction: {
-              tooltipDelay: 100
+              tooltipDelay: empty ? 0: 100
           }
     };
     network = new vis.Network(container, data, options);
@@ -92,7 +113,8 @@ function get_data() {
             $("#error_div").html(`An error occurred: ${data.message}`)
             $("#error_div").show();
         } else {
-            display_graph(JSON.parse(data))
+            my_data = JSON.parse(data);
+            display_graph(my_data, empty);
         }
     })
 }
@@ -121,5 +143,10 @@ $("#btn_rebuild_cache").on('click', () => {
             get_data();
         }
     })
+})
+
+$("#btnEmpty").on('click', ()=>{
+    empty = !empty;
+    display_graph(my_data, empty);
 })
 get_data();
